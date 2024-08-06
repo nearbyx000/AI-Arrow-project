@@ -1,9 +1,10 @@
 from g4f.client import Client
 
 client = Client()
-response = client.chat.completions.create(
-    model="gpt-3.5-turbo",
-    messages=[{"role": "user", "content": "добавь группововой чат в приложение используя библиотеку flet 0.23 на python."}],
-    
-)
-print(response.choices[0].message.content)
+
+while True:
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": input()}],
+    )
+    print(response.choices[0].message.content)
