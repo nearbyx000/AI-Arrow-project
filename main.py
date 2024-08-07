@@ -1,20 +1,52 @@
 import flet as ft
 
+class Message():
+    def __init__(self, user: str, text: str, message_type: str):
+        self.user = user
+        self.text = text
+        self.message_type = message_type
+
 def main(page: ft.Page):
-    page.title = "Простое чат-приложение"
-    page.vertical_alignment = ft.MainAxisAlignment.START
 
-    chat_box = ft.ListView(expand=True)
-    input_field = ft.TextField(hint_text="Введите сообщение...", expand=True)
-    send_button = ft.ElevatedButton("Отправить", on_click=lambda e: send_message())
+    chat = ft.Column()
+    new_message = ft.TextField()
 
-    def send_message():
-        message = input_field.value.strip()
-        if message:
-            chat_box.controls.append(ft.Text(f"You: {message}", size=16))
-            input_field.value = ""
-            page.update()
+    def on_message(message: Message):
+        if message.message_type == "chat_message":
+            chat.controls.append(ft.Text(f"{message.user}: {message.text}"))
+        elif message.message_type == "login_message":
+            chat.controls.append(
+            ft.Text(message.text, italic=True, color=ft.colors.BLACK45, size=12)
+        )
+    page.update()
 
-    page.add(chat_box, ft.Row([input_field, send_button]))
+    page.pubsub.subscribe(on_message)
+    def join_click(e):
+        if not user_name.value:
+            user_name.error_text = "Name cannot be blank!"
+            user_name.update()
+        else:
+             page.session.set("user_name", user_name.value)
+             page.dialog.open = False
+             page.pubsub.send_all(Message(user=user_name.value, text=f"{user_name.value} has joined the chat.", message_type="login_message"))
+             page.update()
+
+    user_name = ft.TextField(label="Enter your name")
+
+    page.dialog = ft.AlertDialog(
+        open=True,
+        modal=True,
+        title=ft.Text("Welcome!"),
+        content=ft.Column([user_name], tight=True),
+        actions=[ft.ElevatedButton(text="Join chat", on_click=join_click)],
+        actions_alignment="end",
+    )
+
+    def send_click(e):
+     page.pubsub.send_all(Message(user=page.session.get('user_name'), text=new_message.value, message_type="chat_message"))
+     new_message.value = ""
+     page.update()
+
+    page.add(chat, ft.Row([new_message, ft.ElevatedButton("Send", on_click=send_click)]))
 
 ft.app(target=main)
